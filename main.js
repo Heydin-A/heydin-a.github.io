@@ -68,18 +68,12 @@ var player = {
 
     },
     updatePos: function() { //Responsible for moving the snake every frame and checking collisions with the edge and tail. also draws and updates the player's tail.
-        //Change color if rainbow mode is on
-        if (player.rainbow)
-            player.currentColor = 'hsl(' + 360 * Math.random() + ', 50%, 50%)';
-        else
-            player.currentColor = 'green';
-
         //Player tail
         playerTrail.push({x:player.x, y:player.y});
 
         ctx.fillStyle = "green";
         if (player.rainbow)
-            ctx.fillStyle = 'hsl(' + 360 * Math.random() + ', 50%, 50%)';
+            ctx.fillStyle = player.currentColor;
         ctx.fillRect(player.x + 2, player.y + 2, 21, 21);
         
         while (playerTrail.length > player.length) {
@@ -87,6 +81,13 @@ var player = {
             ctx.fillRect(playerTrail[0].x, playerTrail[0].y, 25, 25);
             playerTrail.shift();
         }
+        
+        //Change color if rainbow mode is on
+        if (player.rainbow)
+            player.currentColor = 'hsl(' + 360 * Math.random() + ', 50%, 50%)';
+        else
+            player.currentColor = 'green';
+        
         //Move Player
         if (player.up)
             player.y -= 25;
@@ -115,7 +116,7 @@ var player = {
         if (player.x < 0) {
             player.dead = true;
         }
-        if (player.y < 0) {
+        if (player.y < 25) {
             player.dead = true;
         }
         if (player.y > 550 - 25) {
@@ -149,6 +150,17 @@ function foodHandler() {
                 x: (Math.floor(Math.random() * 21) * 25) + 7.5,
                 y: ((Math.floor(Math.random() * 21) + 1) * 25) + 7.5
             };
+        for (var o = 0; o < player.length-1; o++) {
+               if (playerTrail[o].x < food.x + 10 && 
+                playerTrail[o].x + 25 > food.x &&
+                playerTrail[o].y < food.y + 10 &&
+                playerTrail[o].y + 25 > food.y) { 
+                    food = {
+                       x: (Math.floor(Math.random() * 21) * 25) + 7.5,
+                       y: ((Math.floor(Math.random() * 21) + 1) * 25) + 7.5
+                    };
+               }
+        }
     }
 }
 
@@ -163,6 +175,29 @@ function keys(key) {
         } else if (isPaused) {
             isPaused = false;
         }
+    }
+    
+    if (key.keyCode == 82 && key.type == "keyup" && isRunning == false && player.dead == true) { //restart game from gameover screen
+      //Reset all game variables        
+        player.x = 0;
+        player.y = 0;
+        player.up = false;
+        player.down = true;
+        player.left = false;
+        player.right = false;
+        player.currentColor = 'green';
+        player.rainbow = false;
+        player.length = 0;
+        
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0,0,525,550);
+        ctx.font = '25px Arial';
+        ctx.textAlign = "left";
+
+        isPaused = false;
+        player.dead = false;
+        
+        isRunning = true;
     }
     switch(key.type) {
         case "keyup":
@@ -183,7 +218,8 @@ function render() {
             foodHandler();   
             player.updatePos(pressedKeys);
         }
-
+        
+        player.draw(); //Draw player on screen
         
         //Draw GUI background
         ctx.fillStyle = '#04044f';
@@ -223,21 +259,41 @@ function render() {
         ctx.fillRect(524,0,2,550);
         ctx.fillRect(0,25,525,1);
 
-        player.draw(); //Draw player on screen
+       
     } else {
+        //Check highscore and compare
+        
+        if (localStorage.getItem("highScore") !== null) {
+            if (localStorage.getItem("highScore") < player.length) {
+                localStorage.setItem("highScore", player.length);   
+            }
+        } else {
+            localStorage.setItem("highScore", player.length);  
+        }
+        
         //Game over Screen
+        isRunning = false;
+        
         ctx.fillStyle = 'black';
         ctx.fillRect(0,0,525,550);
         ctx.fillStyle = 'red';
         ctx.textAlign = "center";
         ctx.font = '50px Arial';
-        ctx.fillText("Game Over!", 525/2, 550/2);
-
+        ctx.fillText("Game Over!", 525/2, 550/4);
         ctx.fillStyle = 'forestgreen';
         ctx.font = '30px Arial';
-        ctx.fillText("Score: " + player.length, 525/2, 550/2 + 75);
+        ctx.fillText("Score: " + player.length, 525/2, 550/3 + 50);
         ctx.font = '20px Arial';
-        ctx.fillText((player.length / 625) * 100 + "% complete", 525/2, 550/2 + 120);
+        ctx.fillText(((player.length / 625) * 100).toFixed(2) + "% complete", 525/2, 550/3 + 90);
+        ctx.fillStyle = 'purple';
+        ctx.fillText("Highscore: " + localStorage.getItem("highScore") + " " + ((localStorage.getItem("highScore") / 625) * 100).toFixed(2) + "%", 525/2, 550/2+40);
+        ctx.fillStyle = 'skyblue';
+        ctx.fillText("Press 'R' to play again!", 525/2, 530);
+        
+        ctx.font = '30px Arial';
+        ctx.fillStyle = 'green';
+
+        ctx.fillText('SnAkE+', 525/2, 50);
     }
     
 }
