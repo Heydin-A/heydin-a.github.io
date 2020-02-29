@@ -166,7 +166,7 @@ function foodHandler() {
 
 //Manage the pressed keys list.
 function keys(key) {
-    if (key.keyCode == 83 && !isRunning) {
+    if (key.keyCode == 83 && !isRunning && player.dead == false) {
         startGame();
     }
     if (key.keyCode == 27 && key.type == "keydown") {
